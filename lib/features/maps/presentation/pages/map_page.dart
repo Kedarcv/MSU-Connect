@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:msu_connect/core/theme/app_theme.dart';
 import 'package:msu_connect/features/maps/data/services/map_service.dart';
-import 'package:webview_flutter/webview_flutter.dart';
 
 class MapPage extends StatefulWidget {
   const MapPage({super.key});
@@ -20,20 +20,32 @@ class _MapPageState extends State<MapPage> {
   bool _isLoading = true;
   bool _showStreetView = false;
   String? _selectedLocationId;
+  WebViewController? _webViewController;
 
   @override
   void initState() {
     super.initState();
-    _getCurrentLocation();
+    _initializeMap();
+  }
+
+  Future<void> _initializeMap() async {
+    await _getCurrentLocation();
     _addMSUMarkers();
   }
 
   Future<void> _getCurrentLocation() async {
-    final position = await MapService.getCurrentLocation();
-    setState(() {
-      _currentPosition = position;
-      _isLoading = false;
-    });
+    try {
+      final position = await MapService.getCurrentLocation();
+      setState(() {
+        _currentPosition = position;
+        _isLoading = false;
+      });
+    } catch (e) {
+      // Handle error (e.g., show a message)
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
 
   void _addMSUMarkers() {
@@ -48,13 +60,20 @@ class _MapPageState extends State<MapPage> {
 
   void _searchLocation(String query) {
     final searchQuery = query.toLowerCase();
-    final location = MapService.campusLocations.firstWhere(
-      (loc) => loc['title'].toString().toLowerCase().contains(searchQuery) ||
-          loc['snippet'].toString().toLowerCase().contains(searchQuery),
-      orElse: () => {},
-    );
-
-    if (location.isNotEmpty) {
+    
+    // Find matching location
+    Map<String, dynamic>? location;
+    try {
+      location = MapService.campusLocations.firstWhere(
+        (loc) => loc['title'].toString().toLowerCase().contains(searchQuery) ||
+                loc['snippet'].toString().toLowerCase().contains(searchQuery),
+      );
+    } catch (e) {
+      // No location found
+      location = null;
+    }
+    
+    if (location != null) {
       _mapController?.animateCamera(
         CameraUpdate.newLatLngZoom(
           location['position'] as LatLng,
@@ -82,76 +101,90 @@ class _MapPageState extends State<MapPage> {
           if (_showStreetView)
             IconButton(
               icon: const Icon(Icons.map),
-              onPressed: () => setState(() => _showStreetView = false),
+              onPressed: () => _toggleStreetView(''),
             ),
         ],
       ),
       body: Stack(
         children: [
-          if (_isLoading)
-            const Center(child: CircularProgressIndicator())
-          else
-            if (_showStreetView && _selectedLocationId != null)
-              WebView(
-                initialUrl: 'https://www.google.com/maps/embed/v1/streetview?key=${MapService.apiKey}&location=${MapService.getLocationById(_selectedLocationId!)!['position'].latitude},${MapService.getLocationById(_selectedLocationId!)!['position'].longitude}&heading=${MapService.getLocationById(_selectedLocationId!)!['streetViewParams']['heading']}&pitch=${MapService.getLocationById(_selectedLocationId!)!['streetViewParams']['pitch']}&fov=${MapService.getLocationById(_selectedLocationId!)!['streetViewParams']['zoom']}',
-                javascriptMode: JavascriptMode.unrestricted,
-              )
-            else
-              GoogleMap(
-                onMapCreated: _onMapCreated,
-                initialCameraPosition: CameraPosition(
-                  target: _currentPosition != null
-                      ? LatLng(
-                          _currentPosition!.latitude,
-                          _currentPosition!.longitude,
-                        )
-                      : MapService.msuLocation,
-                  zoom: 15.0,
-                ),
-                markers: _markers,
-                myLocationEnabled: true,
-                myLocationButtonEnabled: true,
-                zoomControlsEnabled: true,
-                mapToolbarEnabled: true,
-                compassEnabled: true,
-                onTap: (LatLng position) {
-                  final nearestLocation = MapService.campusLocations.firstWhere(
-                    (loc) => MapService.calculateDistance(
-                          position,
-                          loc['position'] as LatLng,
-                        ) <=
-                        50, // 50 meters radius
-                    orElse: () => {},
-                  );
-
-                  if (nearestLocation.isNotEmpty) {
-                    _toggleStreetView(nearestLocation['id'] as String);
-                  }
-                },
-              ),
-          Positioned(
-            top: 10,
-            left: 10,
-            right: 10,
-            child: Card(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                child: TextField(
-                  controller: _searchController,
-                  decoration: InputDecoration(
-                    hintText: 'Search campus locations...',
-                    suffixIcon: IconButton(
-                      icon: const Icon(Icons.search),
-                      onPressed: () => _searchLocation(_searchController.text),
-                    ),
-                    border: InputBorder.none,
-                  ),
-                  onSubmitted: _searchLocation,
-                ),
-              ),
-            ),
-          ),
+          _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : _showStreetView && _selectedLocationId != null
+                  ? _buildStreetView()
+                  : _buildGoogleMap(),
+          _buildSearchField(),
         ],
+      ),
+    );
+  }
+
+  Widget _buildStreetView() {
+    final location = MapService.getLocationById(_selectedLocationId!);
+    final url = 'https://www.google.com/maps/embed/v1/streetview?key=${MapService.apiKey}&location=${location!['position'].latitude},${location['position'].longitude}&heading=${location['streetViewParams']['heading']}&pitch=${location['streetViewParams']['pitch']}&fov=${location['streetViewParams']['zoom']}';
+    
+    return WebViewWidget(
+      controller: WebViewController()
+        ..setJavaScriptMode(JavaScriptMode.unrestricted)
+        ..loadRequest(Uri.parse(url)),
+    );
+  }
+
+  Widget _buildGoogleMap() {
+    return GoogleMap(
+      onMapCreated: _onMapCreated,
+      initialCameraPosition: CameraPosition(
+        target: _currentPosition != null
+            ? LatLng(_currentPosition!.latitude, _currentPosition!.longitude)
+            : MapService.msuLocation,
+        zoom: 15.0,
+      ),
+      markers: _markers,
+      myLocationEnabled: true,
+      myLocationButtonEnabled: true,
+      zoomControlsEnabled: true,
+      mapToolbarEnabled: true,
+      compassEnabled: true,
+      onTap: _onMapTap,
+    );
+  }
+
+  void _onMapTap(LatLng position) {
+    Map<String, dynamic>? nearestLocation;
+    try {
+      nearestLocation = MapService.campusLocations.firstWhere(
+        (loc) => MapService.calculateDistance(position, loc['position'] as LatLng) <= 50,
+      );
+    } catch (e) {
+      // No location found within the distance threshold
+      nearestLocation = null;
+    }
+    
+    if (nearestLocation != null) {
+      _toggleStreetView(nearestLocation['id'] as String);
+    }
+  }
+
+  Widget _buildSearchField() {
+    return Positioned(
+      top: 10,
+      left: 10,
+      right: 10,
+      child: Card(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8.0),
+          child: TextField(
+            controller: _searchController,
+            decoration: InputDecoration(
+              hintText: 'Search campus locations...',
+              suffixIcon: IconButton(
+                icon: const Icon(Icons.search),
+                onPressed: () => _searchLocation(_searchController.text),
+              ),
+              border: InputBorder.none,
+            ),
+            onSubmitted: _searchLocation,
+          ),
+        ),
       ),
     );
   }

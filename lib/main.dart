@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:msu_connect/features/auth/presentation/pages/login_page.dart';
 import 'package:msu_connect/core/theme/splash_screen.dart';
 import 'package:msu_connect/features/navigation/presentation/pages/main_navigation_page.dart';

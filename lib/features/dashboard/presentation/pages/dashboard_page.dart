@@ -7,7 +7,7 @@ import 'package:msu_connect/features/maps/presentation/pages/map_page.dart';
 class DashboardPage extends StatelessWidget {
   const DashboardPage({super.key});
 
-aps  Widget _buildSectionHeader(BuildContext context, String title) {
+  Widget _buildSectionHeader(BuildContext context, String title) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 16.0),
       child: Row(

@@ -13,7 +13,7 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-also add a google    Future.delayed(const Duration(seconds: 2), () {
+    Future.delayed(const Duration(seconds: 2), () {
       Navigator.pushReplacementNamed(context, '/main');
     });
   }
@@ -32,7 +32,7 @@ also add a google    Future.delayed(const Duration(seconds: 2), () {
             height: 200,
           ).animate()
             .fadeIn(duration: AppAnimations.defaultDuration)
-            .scale(duration: AppAnimations.defaultDuration, begin: 0.8),
+            .scale(duration: AppAnimations.defaultDuration),
         ),
       ),
     );

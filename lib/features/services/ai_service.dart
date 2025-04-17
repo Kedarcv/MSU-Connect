@@ -87,4 +87,6 @@ class AIService {
       throw Exception('Failed to load timetable: ${e.toString()}');
     }
   }
+
+  clearCache() {}
 }

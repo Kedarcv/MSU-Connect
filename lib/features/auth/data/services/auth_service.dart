@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
-import 'package:shared_preferences.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user_model.dart';
 import '../../../services/google_classroom_service.dart';
 import '../../../services/library_service.dart';
@@ -84,7 +84,7 @@ class AuthService {
       prefs.remove(_userKey),
       _googleClassroom.logout(),
       _ai.clearCache(),
-    ]);
+    ] as Iterable<Future>);
   }
 
   Map<String, dynamic> _decodeToken(String token) {

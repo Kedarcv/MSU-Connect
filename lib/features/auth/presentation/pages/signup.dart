@@ -6,17 +6,18 @@ import 'package:msu_connect/features/auth/data/services/auth_service.dart';
 import '../../data/models/user_model.dart';
 import 'dashboard_page.dart';
 
-class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+class SignupPage extends StatefulWidget {
+  const SignupPage({super.key});
 
   @override
-  State<LoginPage> createState() => _LoginPageState();
+  State<SignupPage> createState() => _SignupPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
+class _SignupPageState extends State<SignupPage> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
   final _authService = AuthService();
   bool _isLoading = false;
 
@@ -43,7 +44,6 @@ class _LoginPageState extends State<LoginPage> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // Logo and Title
                     Hero(
                       tag: 'msu_logo',
                       child: Icon(
@@ -56,7 +56,7 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                     const SizedBox(height: 24),
                     Text(
-                      'MSU Connect',
+                      'Create Account',
                       style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
@@ -66,7 +66,6 @@ class _LoginPageState extends State<LoginPage> {
                       .slideY(duration: AppAnimations.defaultDuration, begin: 0.3),
                     const SizedBox(height: 48),
 
-                    // Login Form
                     Container(
                       padding: const EdgeInsets.all(24),
                       decoration: BoxDecoration(
@@ -97,6 +96,9 @@ class _LoginPageState extends State<LoginPage> {
                                 if (value == null || value.isEmpty) {
                                   return 'Please enter your email';
                                 }
+                                if (!value.endsWith('@msu.ac.zw')) {
+                                  return 'Please use your MSU email address';
+                                }
                                 return null;
                               },
                             ),
@@ -115,6 +117,30 @@ class _LoginPageState extends State<LoginPage> {
                                 if (value == null || value.isEmpty) {
                                   return 'Please enter your password';
                                 }
+                                if (value.length < 6) {
+                                  return 'Password must be at least 6 characters';
+                                }
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 16),
+                            TextFormField(
+                              controller: _confirmPasswordController,
+                              obscureText: true,
+                              decoration: InputDecoration(
+                                labelText: 'Confirm Password',
+                                prefixIcon: const Icon(Icons.lock_outline),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Please confirm your password';
+                                }
+                                if (value != _passwordController.text) {
+                                  return 'Passwords do not match';
+                                }
                                 return null;
                               },
                             ),
@@ -123,7 +149,7 @@ class _LoginPageState extends State<LoginPage> {
                               width: double.infinity,
                               height: 50,
                               child: ElevatedButton(
-                                onPressed: _isLoading ? null : _handleLogin,
+                                onPressed: _isLoading ? null : _handleSignup,
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: Theme.of(context).colorScheme.primary,
                                   foregroundColor: Colors.white,
@@ -137,13 +163,20 @@ class _LoginPageState extends State<LoginPage> {
                                         size: 30,
                                       )
                                     : const Text(
-                                        'Login',
+                                        'Sign Up',
                                         style: TextStyle(
                                           fontSize: 16,
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),
                               ),
+                            ),
+                            const SizedBox(height: 16),
+                            TextButton(
+                              onPressed: () {
+                                Navigator.of(context).pop();
+                              },
+                              child: const Text('Already have an account? Login'),
                             ),
                           ],
                         ),
@@ -161,7 +194,7 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  void _handleLogin() async {
+  void _handleSignup() async {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
       try {
@@ -193,6 +226,7 @@ class _LoginPageState extends State<LoginPage> {
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 }
