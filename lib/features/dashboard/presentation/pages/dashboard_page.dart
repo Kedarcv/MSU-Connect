@@ -3,9 +3,22 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:msu_connect/core/theme/animations.dart';
 import 'package:msu_connect/core/theme/app_theme.dart';
 import 'package:msu_connect/features/maps/presentation/pages/map_page.dart';
+import 'package:msu_connect/features/profile/presentation/pages/profile_page.dart';
+import 'package:msu_connect/features/library/presentation/pages/library_page.dart';
+import 'package:msu_connect/features/timetable/presentation/pages/timetable_page.dart';
+import 'package:msu_connect/features/ai_study/presentation/pages/ai_study_page.dart';
+import 'package:msu_connect/features/notifications/presentation/pages/notifications_page.dart';
+import 'package:msu_connect/features/classroom/presentation/pages/classroom_page.dart';
 
-class DashboardPage extends StatelessWidget {
+class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
+
+  @override
+  State<DashboardPage> createState() => _DashboardPageState();
+}
+
+class _DashboardPageState extends State<DashboardPage> {
+  int _currentIndex = 0;
 
   Widget _buildSectionHeader(BuildContext context, String title) {
     return Padding(
@@ -46,7 +59,10 @@ class DashboardPage extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.notifications),
             onPressed: () {
-              // TODO: Implement notifications
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const NotificationsPage()),
+              );
             },
           ),
         ],
@@ -59,58 +75,66 @@ class DashboardPage extends StatelessWidget {
             children: [
               _buildSectionHeader(context, 'Dashboard Overview'),
               // Profile Section
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [AppTheme.msuMaroon, AppTheme.msuTeal],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 10,
-                      spreadRadius: 2,
+              GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const ProfilePage()),
+                  );
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [AppTheme.msuMaroon, AppTheme.msuTeal],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                     ),
-                  ],
-                ),
-                child: Row(
-                  children: [
-                    CircleAvatar(
-                      radius: 30,
-                      backgroundColor: AppTheme.msuGold,
-                      child: const Icon(Icons.person, size: 40, color: Colors.white),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'John Doe',
-                            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                          ),
-                          Text(
-                            'Computer Science',
-                            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                  color: Colors.white70,
-                                ),
-                          ),
-                          Text(
-                            'Reg: R0123456K',
-                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                  color: Colors.white70,
-                                ),
-                          ),
-                        ],
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 10,
+                        spreadRadius: 2,
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 30,
+                        backgroundColor: AppTheme.msuGold,
+                        child: const Icon(Icons.person, size: 40, color: Colors.white),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'John Doe',
+                              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                            ),
+                            Text(
+                              'Computer Science',
+                              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                    color: Colors.white70,
+                                  ),
+                            ),
+                            Text(
+                              'Reg: R0123456K',
+                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    color: Colors.white70,
+                                  ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ).animate()
                 .fadeIn(duration: AppAnimations.defaultDuration)
@@ -150,7 +174,10 @@ class DashboardPage extends StatelessWidget {
                     'Library',
                     Icons.library_books,
                     () {
-                      // TODO: Implement library link
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const LibraryPage()),
+                      );
                     },
                   ),
                   _buildQuickLinkCard(
@@ -158,7 +185,10 @@ class DashboardPage extends StatelessWidget {
                     'Timetable',
                     Icons.calendar_today,
                     () {
-                      // TODO: Implement timetable link
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const TimetablePage()),
+                      );
                     },
                   ),
                   _buildQuickLinkCard(
@@ -166,7 +196,10 @@ class DashboardPage extends StatelessWidget {
                     'AI Study Tool',
                     Icons.psychology,
                     () {
-                      // TODO: Implement AI study tool
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const AiStudyPage()),
+                      );
                     },
                   ),
                 ],
@@ -208,15 +241,30 @@ class DashboardPage extends StatelessWidget {
           NavigationDestination(icon: Icon(Icons.school), label: 'Classroom'),
           NavigationDestination(icon: Icon(Icons.person), label: 'Profile'),
         ],
-        selectedIndex: 0,
+        selectedIndex: _currentIndex,
         onDestinationSelected: (index) {
-          if (index == 1) {
+          setState(() {
+            _currentIndex = index;
+          });
+          
+          if (index == 0) {
+            // Already on dashboard
+          } else if (index == 1) {
             Navigator.push(
               context,
               MaterialPageRoute(builder: (context) => const MapPage()),
             );
+          } else if (index == 2) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const ClassroomPage()),
+            );
+          } else if (index == 3) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const ProfilePage()),
+            );
           }
-          // TODO: Implement other navigation options
         },
       ),
     );
@@ -277,49 +325,58 @@ class DashboardPage extends StatelessWidget {
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const TimetablePage()),
+          );
+        },
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  Icons.class_,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
               ),
-              child: Icon(
-                Icons.class_,
-                color: Theme.of(context).colorScheme.primary,
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      subject,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      time,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: Colors.grey[600],
+                          ),
+                    ),
+                    Text(
+                      location,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: Colors.grey[600],
+                          ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    subject,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    time,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Colors.grey[600],
-                        ),
-                  ),
-                  Text(
-                    location,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Colors.grey[600],
-                        ),
-                  ),
-                ],
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

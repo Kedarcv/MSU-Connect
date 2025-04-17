@@ -21,11 +21,14 @@ class _MapPageState extends State<MapPage> {
   bool _showStreetView = false;
   String? _selectedLocationId;
   WebViewController? _webViewController;
+  bool _isSearching = false;
+  List<Map<String, dynamic>> _filteredLocations = [];
 
   @override
   void initState() {
     super.initState();
     _initializeMap();
+    _setupSearchListener();
   }
 
   Future<void> _initializeMap() async {
@@ -63,7 +66,7 @@ class _MapPageState extends State<MapPage> {
 
   Future<void> _addMSUMarkers() async {
     try {
-      final locations = await MapService.getCampusLocations();
+      final locations = MapService.campusLocations;
       if (!mounted) return;
       
       setState(() {
@@ -77,7 +80,7 @@ class _MapPageState extends State<MapPage> {
                 title: location['title'],
                 snippet: location['snippet'],
               ),
-              onTap: () => _onMarkerTapped(location['id']),
+              onTap: () => _toggleStreetView(location['id']),
               icon: BitmapDescriptor.defaultMarkerWithHue(
                 location['type'] == 'academic' ? BitmapDescriptor.hueRed :
                 location['type'] == 'service' ? BitmapDescriptor.hueBlue :
@@ -168,6 +171,8 @@ class _MapPageState extends State<MapPage> {
                   ? _buildStreetView()
                   : _buildGoogleMap(),
           _buildSearchField(),
+          if (_isSearching && _filteredLocations.isNotEmpty)
+            _buildSearchResults(),
         ],
       ),
     );
@@ -239,6 +244,39 @@ class _MapPageState extends State<MapPage> {
             ),
             onSubmitted: _searchLocation,
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSearchResults() {
+    return Positioned(
+      top: 70,
+      left: 10,
+      right: 10,
+      child: Card(
+        child: ListView.builder(
+          shrinkWrap: true,
+          itemCount: _filteredLocations.length,
+          itemBuilder: (context, index) {
+            final location = _filteredLocations[index];
+            return ListTile(
+              title: Text(location['title']),
+              subtitle: Text(location['snippet']),
+              onTap: () {
+                _mapController?.animateCamera(
+                  CameraUpdate.newLatLngZoom(
+                    location['position'] as LatLng,
+                    18,
+                  ),
+                );
+                setState(() {
+                  _isSearching = false;
+                  _searchController.clear();
+                });
+              },
+            );
+          },
         ),
       ),
     );

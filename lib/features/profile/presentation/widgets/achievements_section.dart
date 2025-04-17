@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:msu_connect/core/theme/app_theme.dart';
 import 'package:msu_connect/features/profile/data/models/achievement_model.dart';
 import 'package:msu_connect/features/profile/data/services/profile_service.dart';
 

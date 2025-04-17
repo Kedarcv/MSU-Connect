@@ -6,6 +6,7 @@ import 'package:msu_connect/features/profile/presentation/widgets/cached_profile
 import 'package:msu_connect/features/profile/data/services/profile_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:async';
 import 'dart:io';
 
 class ProfilePage extends StatefulWidget {
@@ -74,11 +75,12 @@ class _ProfilePageState extends State<ProfilePage> {
           );
         }
       });
-  }
+    }
 
-  Future<void> _pickImage() async {
+  }  Future<void> pickImage() async {
     try {
-      final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+      final XFile? image =
+          await _picker.pickImage(source: ImageSource.gallery);
       if (image != null) {
         setState(() => _isLoading = true);
         final imageFile = File(image.path);
@@ -97,13 +99,13 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
-  void _toggleEdit() {
+  void toggleEdit() {
     setState(() {
       _isEditing = !_isEditing;
     });
   }
 
-  Future<void> _saveProfile() async {
+  Future<void> saveProfile() async {
     if (_formKey.currentState!.validate()) {
       try {
         setState(() => _isLoading = true);
@@ -128,130 +130,14 @@ class _ProfilePageState extends State<ProfilePage> {
         setState(() => _isLoading = false);
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to update profile: ${e.toString()}')),
+          SnackBar(
+              content: Text('Failed to update profile: ${e.toString()}')),
         );
       }
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Profile'),
-        backgroundColor: AppTheme.msuMaroon,
-        foregroundColor: Colors.white,
-        actions: [
-          if (_isLoading)
-            const Padding(
-              padding: EdgeInsets.all(16.0),
-              child: CircularProgressIndicator(color: Colors.white),
-            )
-          else
-            IconButton(
-              icon: Icon(_isEditing ? Icons.save : Icons.edit),
-              onPressed: _isEditing ? _saveProfile : _toggleEdit,
-            ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Stack(
-                children: [
-                                  CachedProfileImage(
-                    imageUrl: _user?.profilePicture,
-                    radius: 50,
-                  ),
-                  if (_isEditing)
-                    Positioned(
-                      bottom: 0,
-                      right: 0,
-                      child: CircleAvatar(
-                        backgroundColor: AppTheme.msuMaroon,
-                        radius: 18,
-                        child: IconButton(
-                          icon: const Icon(Icons.camera_alt, size: 18),
-                          color: Colors.white,
-                          onPressed: _pickImage,
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-              const SizedBox(height: 24),
-              _buildTextField(
-                'Full Name',
-                _nameController,
-                Icons.person,
-                enabled: _isEditing,
-              ),
-              const SizedBox(height: 16),
-              _buildTextField(
-                'Email',
-                _emailController,
-                Icons.email,
-                enabled: _isEditing,
-                keyboardType: TextInputType.emailAddress,
-              ),
-              const SizedBox(height: 16),
-              _buildTextField(
-                'Student ID',
-                _studentIdController,
-                Icons.badge,
-                enabled: _isEditing,
-              ),
-              const SizedBox(height: 16),
-              _buildTextField(
-                'Program',
-                _programController,
-                Icons.school,
-                enabled: _isEditing,
-              ),
-              const SizedBox(height: 16),
-              _buildTextField(
-                'Bio',
-                _bioController,
-                Icons.description,
-                enabled: _isEditing,
-                maxLines: 3,
-              ),
-              const SizedBox(height: 16),
-              _buildTextField(
-                'Phone',
-                _phoneController,
-                Icons.phone,
-                enabled: _isEditing,
-                keyboardType: TextInputType.phone,
-              ),
-              const SizedBox(height: 16),
-              _buildTextField(
-                'Address',
-                _addressController,
-                Icons.location_on,
-                enabled: _isEditing,
-                maxLines: 2,
-              ),
-              if (!_isEditing) ...[                
-                const SizedBox(height: 24),
-                _buildInfoCard('Academic Status', 'Good Standing'),
-                const SizedBox(height: 16),
-                _buildInfoCard('Current Semester', '2023/2024 - 1'),
-                const SizedBox(height: 16),
-                _buildInfoCard('Credits Completed', '60'),
-              ],
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTextField(
+  Widget buildTextField(
     String label,
     TextEditingController controller,
     IconData icon, {
@@ -263,6 +149,7 @@ class _ProfilePageState extends State<ProfilePage> {
       controller: controller,
       enabled: enabled,
       keyboardType: keyboardType,
+      maxLines: maxLines,
       decoration: InputDecoration(
         labelText: label,
         prefixIcon: Icon(icon),
@@ -278,7 +165,7 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _buildInfoCard(String title, String value) {
+  Widget buildInfoCard(String title, String value) {
     return Card(
       elevation: 2,
       child: Padding(
@@ -301,6 +188,123 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Profile'),
+        backgroundColor: AppTheme.msuMaroon,
+        foregroundColor: Colors.white,
+        actions: [
+          if (_isLoading)
+            const Padding(
+              padding: EdgeInsets.all(16.0),
+              child: CircularProgressIndicator(color: Colors.white),
+            )
+          else
+            IconButton(
+              icon: Icon(_isEditing ? Icons.save : Icons.edit),
+              onPressed: _isEditing ? saveProfile : toggleEdit,
+            ),
+        ],
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16.0),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Stack(
+                children: [
+                  CachedProfileImage(
+                    imageUrl: _user?.profilePicture,
+                    radius: 50,
+                  ),
+                  if (_isEditing)
+                    Positioned(
+                      bottom: 0,
+                      right: 0,
+                      child: CircleAvatar(
+                        backgroundColor: AppTheme.msuMaroon,
+                        radius: 18,
+                        child: IconButton(
+                          icon: const Icon(Icons.camera_alt, size: 18),
+                          color: Colors.white,
+                          onPressed: pickImage,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              buildTextField(
+                'Full Name',
+                _nameController,
+                Icons.person,
+                enabled: _isEditing,
+              ),
+              const SizedBox(height: 16),
+              buildTextField(
+                'Email',
+                _emailController,
+                Icons.email,
+                enabled: _isEditing,
+                keyboardType: TextInputType.emailAddress,
+              ),
+              const SizedBox(height: 16),
+              buildTextField(
+                'Student ID',
+                _studentIdController,
+                Icons.badge,
+                enabled: _isEditing,
+              ),
+              const SizedBox(height: 16),
+              buildTextField(
+                'Program',
+                _programController,
+                Icons.school,
+                enabled: _isEditing,
+              ),
+              const SizedBox(height: 16),
+              buildTextField(
+                'Bio',
+                _bioController,
+                Icons.description,
+                enabled: _isEditing,
+                maxLines: 3,
+              ),
+              const SizedBox(height: 16),
+              buildTextField(
+                'Phone',
+                _phoneController,
+                Icons.phone,
+                enabled: _isEditing,
+                keyboardType: TextInputType.phone,
+              ),
+              const SizedBox(height: 16),
+              buildTextField(
+                'Address',
+                _addressController,
+                Icons.location_on,
+                enabled: _isEditing,
+                maxLines: 2,
+              ),
+              if (!_isEditing) ...[
+                const SizedBox(height: 24),
+                buildInfoCard('Academic Status', 'Good Standing'),
+                const SizedBox(height: 16),
+                buildInfoCard('Current Semester', '2023/2024 - 1'),
+                const SizedBox(height: 16),
+                buildInfoCard('Credits Completed', '60'),
+              ],
+            ],
+          ),
         ),
       ),
     );
