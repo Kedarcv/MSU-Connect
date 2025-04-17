@@ -3,6 +3,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:msu_connect/features/profile/data/models/achievement_model.dart';
+import 'package:msu_connect/features/profile/data/models/academic_progress_model.dart';
 
 class ProfileService {
   static final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -135,6 +136,53 @@ class ProfileService {
       });
     } catch (e) {
       throw Exception('Failed to update user data: $e');
+    }
+  }
+
+  // Academic Progress Methods
+  static Future<AcademicProgressModel?> getAcademicProgress(String studentId) async {
+    try {
+      final doc = await _firestore
+          .collection('academic_progress')
+          .doc(studentId)
+          .get();
+
+      if (doc.exists && doc.data() != null) {
+        return AcademicProgressModel.fromJson(doc.data()!);
+      }
+      return null;
+    } catch (e) {
+      throw Exception('Failed to load academic progress: $e');
+    }
+  }
+
+  static Future<void> updateAcademicProgress(
+    AcademicProgressModel academicProgress,
+  ) async {
+    try {
+      await _firestore
+          .collection('academic_progress')
+          .doc(academicProgress.studentId)
+          .set(academicProgress.toJson());
+    } catch (e) {
+      throw Exception('Failed to update academic progress: $e');
+    }
+  }
+
+  static Future<List<CourseHistory>> getEnrolledCourses(String studentId) async {
+    try {
+      final doc = await _firestore
+          .collection('academic_progress')
+          .doc(studentId)
+          .get();
+
+      if (doc.exists && doc.data() != null) {
+        final progress = AcademicProgressModel.fromJson(doc.data()!);
+        return progress.courseHistory;
+      }
+      return [];
+    } catch (e) {
+      throw Exception('Failed to load enrolled courses: $e');
     }
   }
 }
