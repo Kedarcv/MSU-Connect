@@ -45,22 +45,32 @@ class MapService {
   // Get current location with permission handling
   static Future<Position?> getCurrentLocation() async {
     try {
+      // Check if location services are enabled
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
-        return null;
+        throw Exception('Location services are disabled');
       }
 
+      // Check location permissions
       LocationPermission permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
         if (permission == LocationPermission.denied) {
-          return null;
+          throw Exception('Location permissions are denied');
         }
       }
+      
+      if (permission == LocationPermission.deniedForever) {
+        throw Exception('Location permissions are permanently denied');
+      }
 
-      return await Geolocator.getCurrentPosition();
+      // Get current position with high accuracy
+      return await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+        timeLimit: const Duration(seconds: 5),
+      );
     } catch (e) {
-      return null;
+      throw Exception('Failed to get current location: $e');
     }
   }
 

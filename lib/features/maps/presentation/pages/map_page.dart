@@ -41,16 +41,71 @@ class _MapPageState extends State<MapPage> {
         _isLoading = false;
       });
     } catch (e) {
-      // Handle error (e.g., show a message)
       setState(() {
         _isLoading = false;
       });
+      
+      // Show error message to user
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString()),
+          action: SnackBarAction(
+            label: 'Settings',
+            onPressed: () async {
+              await Geolocator.openLocationSettings();
+            },
+          ),
+        ),
+      );
     }
   }
 
-  void _addMSUMarkers() {
-    setState(() {
-      _markers.addAll(MapService.getCampusMarkers());
+  Future<void> _addMSUMarkers() async {
+    try {
+      final locations = await MapService.getCampusLocations();
+      if (!mounted) return;
+      
+      setState(() {
+        _markers.clear();
+        for (final location in locations) {
+          _markers.add(
+            Marker(
+              markerId: MarkerId(location['id']),
+              position: location['position'],
+              infoWindow: InfoWindow(
+                title: location['title'],
+                snippet: location['snippet'],
+              ),
+              onTap: () => _onMarkerTapped(location['id']),
+              icon: BitmapDescriptor.defaultMarkerWithHue(
+                location['type'] == 'academic' ? BitmapDescriptor.hueRed :
+                location['type'] == 'service' ? BitmapDescriptor.hueBlue :
+                BitmapDescriptor.hueGreen
+              ),
+            ),
+          );
+        }
+      });
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to load campus locations: $e')),
+      );
+    }
+  }
+
+  void _setupSearchListener() {
+    _searchController.addListener(() {
+      final query = _searchController.text.toLowerCase();
+      setState(() {
+        _isSearching = query.isNotEmpty;
+        _filteredLocations = MapService.campusLocations
+            .where((location) =>
+                location['title'].toLowerCase().contains(query) ||
+                location['snippet'].toLowerCase().contains(query))
+            .toList();
+      });
     });
   }
 
