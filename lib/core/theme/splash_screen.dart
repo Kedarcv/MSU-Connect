@@ -1,6 +1,6 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
-import 'package:msu_connect/core/theme/animations.dart';
+import 'package:msu_connect/screens/auth/auth_wrapper.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -13,26 +13,29 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    Future.delayed(const Duration(seconds: 2), () {
-      Navigator.pushReplacementNamed(context, '/main');
+    // Set a timer to navigate to AuthWrapper after 3 seconds
+    Timer(const Duration(seconds: 3), () {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const AuthWrapper()),
+      );
     });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-        ),
-        child: Center(
-          child: Image.asset(
-            'assets/msu.png',
-            width: 200,
-            height: 200,
-          ).animate()
-            .fadeIn(duration: AppAnimations.defaultDuration)
-            .scale(duration: AppAnimations.defaultDuration),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Your splash screen logo or animation
+            Image.asset('assets/msu1.png', height: 150),
+            const SizedBox(height: 20),
+            const CircularProgressIndicator(),
+            const SizedBox(height: 20),
+            const Text('MSU Connect', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+          ],
         ),
       ),
     );

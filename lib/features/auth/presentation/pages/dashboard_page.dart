@@ -1,10 +1,68 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class DashboardPage extends StatelessWidget {
   final Map<String, dynamic> userData;
 
   const DashboardPage({super.key, required this.userData});
+
+  Future<void> _logout(BuildContext context) async {
+    // Clear user data from shared preferences
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
+    
+    // Navigate back to login page and clear navigation stack
+    if (context.mounted) {
+      Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+    }
+  }
+
+  Future<void> _launchUrl(String url) async {
+    final Uri uri = Uri.parse(url);
+    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+      throw Exception('Could not launch $url');
+    }
+  }
+
+  void _showTimetable(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Your Timetable'),
+        content: const SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Monday:'),
+              Text('• 09:00 - 11:00: Introduction to Programming'),
+              Text('• 13:00 - 15:00: Mathematics'),
+              SizedBox(height: 8),
+              Text('Tuesday:'),
+              Text('• 10:00 - 12:00: Data Structures'),
+              Text('• 14:00 - 16:00: Physics'),
+              SizedBox(height: 8),
+              Text('Wednesday:'),
+              Text('• 09:00 - 11:00: Database Systems'),
+              Text('• 13:00 - 15:00: Computer Networks'),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _openAIStudyTool(BuildContext context) {
+    Navigator.of(context).pushNamed('/ai-study-tool');
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -16,10 +74,7 @@ class DashboardPage extends StatelessWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
-            onPressed: () {
-              // TODO: Implement logout
-              Navigator.of(context).pop();
-            },
+            onPressed: () => _logout(context),
           ),
         ],
       ),
@@ -74,7 +129,7 @@ class DashboardPage extends StatelessWidget {
                     icon: Icons.language,
                     color: Theme.of(context).colorScheme.primary,
                     onTap: () {
-                      // TODO: Launch MSU website
+                      _launchUrl('https://www.msu.ac.zw/');
                     },
                   ),
                   _QuickLinkCard(
@@ -82,7 +137,7 @@ class DashboardPage extends StatelessWidget {
                     icon: Icons.library_books,
                     color: Theme.of(context).colorScheme.secondary,
                     onTap: () {
-                      // TODO: Launch library portal
+                      _launchUrl('https://library.msu.ac.zw/');
                     },
                   ),
                   _QuickLinkCard(
@@ -90,7 +145,7 @@ class DashboardPage extends StatelessWidget {
                     icon: Icons.calendar_today,
                     color: Theme.of(context).colorScheme.tertiary,
                     onTap: () {
-                      // TODO: Show timetable
+                      _showTimetable(context);
                     },
                   ),
                   _QuickLinkCard(
@@ -98,7 +153,7 @@ class DashboardPage extends StatelessWidget {
                     icon: Icons.psychology,
                     color: Colors.purple,
                     onTap: () {
-                      // TODO: Launch AI study tool
+                      _openAIStudyTool(context);
                     },
                   ),
                 ],

@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:msu_connect/core/theme/app_theme.dart';
+import 'package:msu_connect/features/settings/presentation/pages/developer_page.dart';
+import 'package:msu_connect/features/settings/presentation/pages/privacy_policy_page.dart';
+import 'package:msu_connect/features/settings/presentation/pages/terms_of_service_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SettingsPage extends StatefulWidget {
@@ -115,17 +118,69 @@ class _SettingsPageState extends State<SettingsPage> {
                 title: const Text('Terms of Service'),
                 trailing: const Icon(Icons.arrow_forward_ios),
                 onTap: () {
-                  // TODO: Implement Terms of Service page
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const TermsOfServicePage(),
+                    ),
+                  );
                 },
               ),
               ListTile(
                 title: const Text('Privacy Policy'),
                 trailing: const Icon(Icons.arrow_forward_ios),
                 onTap: () {
-                  // TODO: Implement Privacy Policy page
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const PrivacyPolicyPage(),
+                    ),
+                  );
+                },
+              ),
+              ListTile(
+                title: const Text('Developer'),
+                trailing: const Icon(Icons.arrow_forward_ios),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const DeveloperPage(),
+                    ),
+                  );
                 },
               ),
             ],
+          ),
+          const SizedBox(height: 20),
+          Center(
+            child: Column(
+              children: [
+                const Text(
+                  'Developed by',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Image.asset(
+                  'assets/images/brocode_logo.png',
+                  height: 60,
+                  errorBuilder: (context, error, stackTrace) {
+                    return const Text(
+                      'BROCODE ZIMBABWE',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.msuMaroon,
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 16),
+              ],
+            ),
           ),
         ],
       ),
