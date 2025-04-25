@@ -18,6 +18,8 @@ class AuthService {
   final AIService _ai = AIService();
   final DocumentService _document = DocumentService();
 
+  get currentUser => null;
+
   Future<UserModel> login(String email, String password) async {
     try {
       if (!email.endsWith('@students.msu.ac.zw')) {

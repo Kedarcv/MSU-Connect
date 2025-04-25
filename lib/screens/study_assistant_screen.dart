@@ -2,8 +2,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:msu_connect/features/webview/presentation/pages/web_view_page.dart';
 import 'package:msu_connect/services/gemini_service.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class StudyAssistantScreen extends StatefulWidget {
   const StudyAssistantScreen({super.key});
@@ -105,15 +105,17 @@ class _StudyAssistantScreenState extends State<StudyAssistantScreen> {
     }
   }
 
-  void _openMsuLibrary() async {
+  void _openMsuLibrary() {
     const url = 'https://library.msu.ac.zw';
-    if (await canLaunch(url)) {
-      await launch(url);
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not open MSU library website')),
-      );
-    }
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => WebViewPage(
+          url: url,
+          title: 'MSU Library',
+        ),
+      ),
+    );
   }
 
   @override

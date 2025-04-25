@@ -10,7 +10,7 @@ import 'dart:async';
 import 'dart:io';
 
 class ProfilePage extends StatefulWidget {
-  const ProfilePage({super.key});
+  const ProfilePage({super.key, required Map<String, dynamic> userData});
 
   @override
   State<ProfilePage> createState() => _ProfilePageState();

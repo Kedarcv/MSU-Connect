@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:msu_connect/features/auth/presentation/pages/dashboard_page.dart';
+import 'package:msu_connect/features/dashboard/presentation/pages/dashboard_page.dart';
 import 'package:msu_connect/screens/auth/register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -36,7 +36,7 @@ class _LoginScreenState extends State<LoginScreen> {
           email: _emailController.text.trim(),
           password: _passwordController.text.trim(),
         );
-        
+
         // Navigate to home screen after successful login
         if (mounted) {
           Navigator.of(context).pushReplacement(

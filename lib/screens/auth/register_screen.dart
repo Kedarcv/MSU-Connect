@@ -47,7 +47,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         // Navigate to home screen after successful registration
         if (mounted) {
           Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (context) => const DashboardPage()),
+            MaterialPageRoute(builder: (context) => const DashboardPage(userData: {},)),
           );
         }
       } on FirebaseAuthException catch (e) {
@@ -72,7 +72,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('MSU Connect - Register'),
+        title: Text('Dashboard'),
+        // Remove other complex widgets temporarily
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),

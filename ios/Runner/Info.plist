@@ -1,0 +1,3 @@
+<!-- Verify that CFBundleIconName is set correctly -->
+<key>CFBundleIconName</key>
+<string>AppIcon</string>

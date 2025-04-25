@@ -4,12 +4,14 @@ import 'package:geolocator/geolocator.dart';
 import 'dart:async';
 
 class MapScreen extends StatefulWidget {
+  const MapScreen({super.key});
+
   @override
   _MapScreenState createState() => _MapScreenState();
 }
 
 class _MapScreenState extends State<MapScreen> {
-  Completer<GoogleMapController> _controller = Completer();
+  final Completer<GoogleMapController> _controller = Completer();
   StreamSubscription<Position>? _positionStreamSubscription;
   final Set<Marker> _markers = {};
   

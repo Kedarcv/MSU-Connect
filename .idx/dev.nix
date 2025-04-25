@@ -6,7 +6,11 @@
   ];
   idx.extensions = [
     
-  ];
+  
+ "Dart-Code.dart-code"
+ "Dart-Code.flutter"
+ "sourcegraph.cody-ai"
+ "sourcegraph.cody-testing"];
   idx.previews = {
     previews = {
       web = {

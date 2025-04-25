@@ -11,7 +11,7 @@ class GeminiService {
   GeminiService._() {
     final apiKey = _getApiKey();
     _model = GenerativeModel(
-      model: 'gemini-pro-vision',
+      model: 'gemini-1.5-flash',
       apiKey: apiKey,
     );
   }

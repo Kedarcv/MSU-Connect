@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:msu_connect/core/theme/app_theme.dart';
+import 'package:msu_connect/features/services/timetable_service.dart';
+import 'package:msu_connect/features/timetable/domain/models/class_info.dart';
 
 class TimetablePage extends StatefulWidget {
   const TimetablePage({super.key});
@@ -11,6 +13,9 @@ class TimetablePage extends StatefulWidget {
 class _TimetablePageState extends State<TimetablePage> with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final List<String> _weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+  final TimetableService _timetableService = TimetableService();
+  bool _isLoading = true;
+  Map<String, List<ClassInfo>> _timetableData = {};
   
   @override
   void initState() {
@@ -22,6 +27,39 @@ class _TimetablePageState extends State<TimetablePage> with SingleTickerProvider
       vsync: this,
       initialIndex: initialIndex,
     );
+    
+    _loadTimetableData();
+    
+    // Listen for timetable updates
+    _timetableService.timetableStream.listen((updatedData) {
+      if (mounted) {
+        setState(() {
+          _timetableData = updatedData;
+          _isLoading = false;
+        });
+      }
+    });
+  }
+  
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+  
+  Future<void> _loadTimetableData() async {
+    setState(() {
+      _isLoading = true;
+    });
+    
+    await _timetableService.initialize();
+    
+    if (mounted) {
+      setState(() {
+        _timetableData = _timetableService.timetableData;
+        _isLoading = false;
+      });
+    }
   }
 
   @override
@@ -39,146 +77,400 @@ class _TimetablePageState extends State<TimetablePage> with SingleTickerProvider
           unselectedLabelColor: Colors.white70,
           indicatorColor: Colors.white,
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: _loadTimetableData,
+            tooltip: 'Refresh timetable',
+          ),
+        ],
       ),
-      body: TabBarView(
-        controller: _tabController,
-        children: _weekdays.map((day) => _buildDaySchedule(day)).toList(),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : TabBarView(
+              controller: _tabController,
+              children: _weekdays.map((day) => _buildDaySchedule(day)).toList(),
+            ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => _showAddClassDialog(context),
+        backgroundColor: AppTheme.msuMaroon,
+        child: const Icon(Icons.add, color: Colors.white),
       ),
     );
   }
 
   Widget _buildDaySchedule(String day) {
-    // Sample schedule data
-    final classes = _getSampleClasses(day);
+    final classes = _timetableData[day] ?? [];
     
     return classes.isEmpty
-        ? const Center(child: Text('No classes scheduled'))
-        : ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: classes.length,
-            itemBuilder: (context, index) {
-              final classInfo = classes[index];
-              return Card(
-                margin: const EdgeInsets.only(bottom: 16),
-                elevation: 4,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: classInfo['color'],
-                      width: 2,
-                    ),
+        ? Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text('No classes scheduled for this day'),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () => _showAddClassDialog(context, preselectedDay: day),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.msuMaroon,
+                    foregroundColor: Colors.white,
                   ),
-                  child: ListTile(
-                    contentPadding: const EdgeInsets.all(16),
-                    title: Text(
-                      classInfo['subject'],
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18,
+                  child: const Text('Add Class'),
+                ),
+              ],
+            ),
+          )
+        : RefreshIndicator(
+            onRefresh: _loadTimetableData,
+            child: ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: classes.length,
+              itemBuilder: (context, index) {
+                final classInfo = classes[index];
+                return Dismissible(
+                  key: Key('${day}_${index}_${classInfo.subject}'),
+                  background: Container(
+                    color: Colors.red,
+                    alignment: Alignment.centerRight,
+                    padding: const EdgeInsets.only(right: 20),
+                    child: const Icon(Icons.delete, color: Colors.white),
+                  ),
+                  direction: DismissDirection.endToStart,
+                  confirmDismiss: (direction) async {
+                    return await showDialog(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return AlertDialog(
+                          title: const Text('Confirm Deletion'),
+                          content: Text('Are you sure you want to remove ${classInfo.subject}?'),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.of(context).pop(false),
+                              child: const Text('Cancel'),
+                            ),
+                            TextButton(
+                              onPressed: () => Navigator.of(context).pop(true),
+                              child: const Text('Delete'),
+                            ),
+                          ],
+                        );
+                      },
+                    );
+                  },
+                  onDismissed: (direction) {
+                    _timetableService.removeClass(day, index);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('${classInfo.subject} removed')),
+                    );
+                  },
+                  child: Card(
+                    margin: const EdgeInsets.only(bottom: 16),
+                    elevation: 4,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: Color(classInfo.colorValue),
+                          width: 2,
+                        ),
+                      ),
+                      child: ListTile(
+                        contentPadding: const EdgeInsets.all(16),
+                        title: Text(
+                          classInfo.subject,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18,
+                          ),
+                        ),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                const Icon(Icons.access_time, size: 16),
+                                const SizedBox(width: 4),
+                                Text(classInfo.time),
+                              ],
+                            ),
+                            const SizedBox(height: 4),
+                            Row(
+                              children: [
+                                const Icon(Icons.location_on, size: 16),
+                                const SizedBox(width: 4),
+                                Text(classInfo.location),
+                              ],
+                            ),
+                            const SizedBox(height: 4),
+                            Row(
+                              children: [
+                                const Icon(Icons.person, size: 16),
+                                const SizedBox(width: 4),
+                                Text(classInfo.lecturer),
+                              ],
+                            ),
+                          ],
+                        ),
+                        trailing: IconButton(
+                          icon: const Icon(Icons.edit),
+                          onPressed: () => _showEditClassDialog(context, day, index, classInfo),
+                        ),
                       ),
                     ),
-                    subtitle: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            const Icon(Icons.access_time, size: 16),
-                            const SizedBox(width: 4),
-                            Text(classInfo['time']),
-                          ],
-                        ),
-                        const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            const Icon(Icons.location_on, size: 16),
-                            const SizedBox(width: 4),
-                            Text(classInfo['location']),
-                          ],
-                        ),
-                        const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            const Icon(Icons.person, size: 16),
-                            const SizedBox(width: 4),
-                            Text(classInfo['lecturer']),
-                          ],
-                        ),
-                      ],
-                    ),
                   ),
-                ),
-              );
-            },
+                );
+              },
+            ),
           );
   }
 
-  List<Map<String, dynamic>> _getSampleClasses(String day) {
-    final Map<String, List<Map<String, dynamic>>> schedule = {
-      'Monday': [
-        {
-          'subject': 'Database Systems',
-          'time': '09:00 AM - 11:00 AM',
-          'location': 'Room 2.1',
-          'lecturer': 'Dr. Smith',
-          'color': Colors.blue,
-        },
-        {
-          'subject': 'Computer Networks',
-          'time': '01:00 PM - 03:00 PM',
-          'location': 'Lab 3',
-          'lecturer': 'Prof. Johnson',
-          'color': Colors.green,
-        },
-      ],
-      'Tuesday': [
-        {
-          'subject': 'Software Engineering',
-          'time': '10:00 AM - 12:00 PM',
-          'location': 'Room 3.2',
-          'lecturer': 'Dr. Williams',
-          'color': Colors.orange,
-        },
-      ],
-      'Wednesday': [
-        {
-          'subject': 'Artificial Intelligence',
-          'time': '09:00 AM - 11:00 AM',
-          'location': 'Lab 5',
-          'lecturer': 'Dr. Brown',
-          'color': Colors.purple,
-        },
-      ],
-      'Thursday': [
-        {
-          'subject': 'Web Development',
-          'time': '11:00 AM - 01:00 PM',
-          'location': 'Lab 2',
-          'lecturer': 'Dr. Wilson',
-          'color': Colors.teal,
-        },
-      ],
-      'Friday': [
-        {
-          'subject': 'Project Management',
-          'time': '09:00 AM - 11:00 AM',
-          'location': 'Room 4.1',
-          'lecturer': 'Prof. Taylor',
-          'color': Colors.amber,
-        },
-      ],
-    };
-    
-    return schedule[day] ?? [];
+  void _showAddClassDialog(BuildContext context, {String? preselectedDay}) {
+    final formKey = GlobalKey<FormState>();
+    String selectedDay = preselectedDay ?? _weekdays[_tabController.index];
+    String subject = '';
+    String time = '';
+    String location = '';
+    String lecturer = '';
+    Color selectedColor = Colors.blue;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Add Class'),
+        content: Form(
+          key: formKey,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                DropdownButtonFormField<String>(
+                  value: selectedDay,
+                  decoration: const InputDecoration(labelText: 'Day'),
+                  items: _weekdays.map((day) => DropdownMenuItem(
+                    value: day,
+                    child: Text(day),
+                  )).toList(),
+                  onChanged: (value) {
+                    selectedDay = value!;
+                  },
+                ),
+                TextFormField(
+                  decoration: const InputDecoration(labelText: 'Subject'),
+                  validator: (value) => value!.isEmpty ? 'Required' : null,
+                  onSaved: (value) => subject = value!,
+                ),
+                                TextFormField(
+                  decoration: const InputDecoration(labelText: 'Time (e.g. 9:00 AM - 10:30 AM)'),
+                  validator: (value) => value!.isEmpty ? 'Required' : null,
+                  onSaved: (value) => time = value!,
+                ),
+                TextFormField(
+                  decoration: const InputDecoration(labelText: 'Location'),
+                  validator: (value) => value!.isEmpty ? 'Required' : null,
+                  onSaved: (value) => location = value!,
+                ),
+                TextFormField(
+                  decoration: const InputDecoration(labelText: 'Lecturer'),
+                  validator: (value) => value!.isEmpty ? 'Required' : null,
+                  onSaved: (value) => lecturer = value!,
+                ),
+                const SizedBox(height: 16),
+                const Text('Select Color:'),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  children: [
+                    Colors.blue,
+                    Colors.green,
+                    Colors.orange,
+                    Colors.purple,
+                    Colors.teal,
+                    Colors.amber,
+                    Colors.red,
+                    Colors.indigo,
+                  ].map((color) {
+                    return GestureDetector(
+                      onTap: () {
+                        selectedColor = color;
+                      },
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        margin: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: color,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: selectedColor.value == color.value ? Colors.black : Colors.transparent,
+                            width: 2,
+                          ),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              if (formKey.currentState!.validate()) {
+                formKey.currentState!.save();
+                
+                final newClass = ClassInfo(
+                  subject: subject,
+                  time: time,
+                  location: location,
+                  lecturer: lecturer,
+                  colorValue: selectedColor.value,
+                );
+                
+                // Add the class to the timetable
+                _timetableService.addClass(selectedDay, newClass);
+                
+                Navigator.of(context).pop();
+                
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('$subject added to $selectedDay')),
+                );
+              }
+            },
+            child: const Text('Add'),
+          ),
+        ],
+      ),
+    );
   }
 
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
+  void _showEditClassDialog(BuildContext context, String day, int index, ClassInfo classInfo) {
+    final formKey = GlobalKey<FormState>();
+    String subject = classInfo.subject;
+    String time = classInfo.time;
+    String location = classInfo.location;
+    String lecturer = classInfo.lecturer;
+    Color selectedColor = Color(classInfo.colorValue);
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Edit Class'),
+        content: Form(
+          key: formKey,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  initialValue: subject,
+                  decoration: const InputDecoration(labelText: 'Subject'),
+                  validator: (value) => value!.isEmpty ? 'Required' : null,
+                  onSaved: (value) => subject = value!,
+                ),
+                TextFormField(
+                  initialValue: time,
+                  decoration: const InputDecoration(labelText: 'Time'),
+                  validator: (value) => value!.isEmpty ? 'Required' : null,
+                  onSaved: (value) => time = value!,
+                ),
+                TextFormField(
+                  initialValue: location,
+                  decoration: const InputDecoration(labelText: 'Location'),
+                  validator: (value) => value!.isEmpty ? 'Required' : null,
+                  onSaved: (value) => location = value!,
+                ),
+                TextFormField(
+                  initialValue: lecturer,
+                  decoration: const InputDecoration(labelText: 'Lecturer'),
+                  validator: (value) => value!.isEmpty ? 'Required' : null,
+                  onSaved: (value) => lecturer = value!,
+                ),
+                const SizedBox(height: 16),
+                const Text('Select Color:'),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  children: [
+                    Colors.blue,
+                    Colors.green,
+                    Colors.orange,
+                    Colors.purple,
+                    Colors.teal,
+                    Colors.amber,
+                    Colors.red,
+                    Colors.indigo,
+                  ].map((color) {
+                    return GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          selectedColor = color;
+                        });
+                      },
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        margin: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: color,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: selectedColor.value == color.value ? Colors.black : Colors.transparent,
+                            width: 2,
+                          ),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              if (formKey.currentState!.validate()) {
+                formKey.currentState!.save();
+                
+                final updatedClass = ClassInfo(
+                  subject: subject,
+                  time: time,
+                  location: location,
+                  lecturer: lecturer,
+                  colorValue: selectedColor.value,
+                );
+                
+                // Update the class in the timetable
+                final updatedTimetable = Map<String, List<ClassInfo>>.from(_timetableData);
+                if (updatedTimetable.containsKey(day) && index >= 0 && index < updatedTimetable[day]!.length) {
+                  updatedTimetable[day]![index] = updatedClass;
+                  _timetableService.updateTimetable(updatedTimetable);
+                }
+                
+                Navigator.of(context).pop();
+                
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('$subject updated')),
+                );
+              }
+            },
+            child: const Text('Update'),
+          ),
+        ],
+      ),
+    );
   }
 }

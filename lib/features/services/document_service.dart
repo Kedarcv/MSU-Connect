@@ -22,6 +22,8 @@ class DocumentService {
     return path;
   }
 
+  get getLocalPath => null;
+
   Future<File> downloadDocument(String url, String fileName) async {
     try {
       if (!await requestStoragePermission()) {
