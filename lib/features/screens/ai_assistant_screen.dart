@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:msu_connect/features/auth/data/services/auth_service.dart';
 import 'package:msu_connect/features/services/ai_service.dart';
+import 'package:msu_connect/features/services/auth_service.dart';
 import 'package:msu_connect/features/widgets/app_sidebar.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:provider/provider.dart';
@@ -59,7 +59,7 @@ class _AIAssistantScreenState extends State<AIAssistantScreen> {
           ),
         ],
       ),
-      drawer: AppSidebar(),
+      drawer: AppSidebar(userData: {},),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : Column(

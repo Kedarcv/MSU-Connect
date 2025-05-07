@@ -33,7 +33,7 @@ class GeminiService {
     }
     
     // If still not found, throw an error
-    if (apiKey == null || apiKey.isEmpty) {
+    if (apiKey!.isEmpty) {
       throw Exception('Gemini API key not found. Please set GEMINI_API_KEY in your environment variables or .env file.');
     }
     

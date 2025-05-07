@@ -58,7 +58,7 @@ class _ElearningPageState extends State<ElearningPage> {
           ),
         ],
       ),
-      drawer: AppSidebar(),
+      drawer: AppSidebar(userData: {},),
       body: Stack(
         children: [
           WebViewWidget(controller: _controller),

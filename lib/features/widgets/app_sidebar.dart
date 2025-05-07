@@ -1,124 +1,135 @@
 import 'package:flutter/material.dart';
-import 'package:msu_connect/features/auth/data/services/auth_service.dart';
-import 'package:msu_connect/features/services/document_service.dart';
-import 'package:msu_connect/features/services/ai_service.dart';
-import 'package:provider/provider.dart';
-import 'package:msu_connect/features/elearning/presentation/pages/elearning_page.dart';
-
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:msu_connect/core/theme/app_theme.dart';
+import 'package:msu_connect/features/profile/presentation/pages/profile_page.dart';
+import 'package:msu_connect/features/screens/document_upload_screen.dart';
 
 class AppSidebar extends StatelessWidget {
-  final DocumentService documentService = DocumentService();
-  final AIService aiService = AIService();
-
-  AppSidebar({super.key});
+  final Map<String, dynamic> userData;
+  
+  const AppSidebar({
+    super.key,
+    required this.userData,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
+    final displayName = userData['displayName'] ?? user?.displayName ?? 'Student';
+    final email = user?.email ?? 'No email';
+    
     return Drawer(
       child: ListView(
         padding: EdgeInsets.zero,
         children: [
-          DrawerHeader(
-            decoration: BoxDecoration(
-              color: Theme.of(context).primaryColor,
+          UserAccountsDrawerHeader(
+            accountName: Text(
+              displayName,
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+              ),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                CircleAvatar(
-                  radius: 30,
-                  backgroundColor: Colors.white,
-                  child: Icon(
-                    Icons.person,
-                    size: 40,
-                    color: Theme.of(context).primaryColor,
-                  ),
+            accountEmail: Text(email),
+            currentAccountPicture: CircleAvatar(
+              backgroundColor: Colors.white,
+              child: Text(
+                displayName.isNotEmpty ? displayName[0].toUpperCase() : 'S',
+                style: TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.msuMaroon,
                 ),
-                const SizedBox(height: 10),
-                const Text(
-                  'MSU Connect',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
+              ),
+            ),
+            decoration: BoxDecoration(
+              color: AppTheme.msuMaroon,
             ),
           ),
           ListTile(
-            leading: const Icon(Icons.dashboard),
+            leading: const Icon(Icons.home),
             title: const Text('Dashboard'),
             onTap: () {
-              Navigator.pushReplacementNamed(context, '/dashboard');
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.calendar_today),
-            title: const Text('Timetable'),
-            onTap: () {
-              Navigator.pushReplacementNamed(context, '/timetable');
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.folder),
-            title: const Text('Documents'),
-            onTap: () async {
               Navigator.pop(context);
-              final documents = await documentService.organizeDocuments();
-              Navigator.pushNamed(context, '/documents', arguments: documents);
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.smart_toy),
-            title: const Text('AI Assistant'),
-            onTap: () {
-              Navigator.pushReplacementNamed(context, '/ai_assistant');
+              Navigator.pushNamedAndRemoveUntil(
+                context, 
+                '/dashboard', 
+                (route) => false,
+                arguments: userData,
+              );
             },
           ),
           ListTile(
             leading: const Icon(Icons.person),
             title: const Text('Profile'),
             onTap: () {
-              Navigator.pushReplacementNamed(context, '/profile');
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ProfilePage(userData: userData),
+                ),
+              );
             },
           ),
           ListTile(
-            leading: const Icon(Icons.school),
-            title: const Text('E-Learning Portal'),
+            leading: const Icon(Icons.upload_file),
+            title: const Text('Upload Document'),
             onTap: () {
-              Navigator.pop(context); // Close the drawer
+              Navigator.pop(context);
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const ElearningPage()),
+                MaterialPageRoute(
+                  builder: (context) => const DocumentUploadPage(),
+                ),
               );
             },
           ),
           const Divider(),
           ListTile(
+            leading: const Icon(Icons.settings),
+            title: const Text('Settings'),
+            onTap: () {
+              Navigator.pop(context);
+              // Navigate to settings page
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.help),
+            title: const Text('Help & Support'),
+            onTap: () {
+              Navigator.pop(context);
+              // Navigate to help page
+            },
+          ),
+          const Divider(),
+          ListTile(
             leading: const Icon(Icons.logout, color: Colors.red),
-            title: const Text('Logout', style: TextStyle(color: Colors.red)),
+            title: const Text(
+              'Logout',
+              style: TextStyle(color: Colors.red),
+            ),
             onTap: () async {
               try {
-                // Get the AIService instance
-                final aiService = Provider.of<AIService>(context, listen: false);
-                
-                // Clear AI service cache
-                await aiService.clearCache();
-                
-                // Logout user
-                await Provider.of<AuthService>(context, listen: false).logout();
-                
-                // Navigate to login screen
-                Navigator.pushReplacementNamed(context, '/login');
+                await FirebaseAuth.instance.signOut();
+                if (context.mounted) {
+                  Navigator.pushNamedAndRemoveUntil(
+                    context, 
+                    '/login', 
+                    (route) => false,
+                  );
+                }
               } catch (e) {
-                // Show error message
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Error during logout: ${e.toString()}')),
-                );
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Error signing out: ${e.toString()}')),
+                  );
+                }
               }
             },
-          ),        ],      ),
+          ),
+        ],
+      ),
     );
   }
 }

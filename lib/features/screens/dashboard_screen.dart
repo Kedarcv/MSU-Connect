@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:msu_connect/features/services/auth_service.dart';
 import 'package:msu_connect/features/widgets/app_sidebar.dart';
 import 'package:msu_connect/features/widgets/dashboard_timetable_widget.dart';
 import 'package:msu_connect/features/services/document_service.dart';
 import 'package:provider/provider.dart';
 
-import '../auth/data/services/auth_service.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -50,7 +50,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       appBar: AppBar(
         title: const Text('MSU Connect'),
       ),
-      drawer: AppSidebar(),
+      drawer: AppSidebar(userData: {},),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(

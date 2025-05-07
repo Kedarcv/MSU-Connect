@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:msu_connect/core/theme/app_theme.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 
 class LibraryPage extends StatefulWidget {
   const LibraryPage({super.key});
@@ -13,11 +14,36 @@ class _LibraryPageState extends State<LibraryPage> {
   List<Map<String, dynamic>> _books = [];
   List<Map<String, dynamic>> _filteredBooks = [];
   bool _isLoading = true;
+  bool _showWebView = false;
+  late WebViewController _webViewController;
 
   @override
   void initState() {
     super.initState();
     _loadBooks();
+    _initWebView();
+  }
+
+  void _initWebView() {
+    _webViewController = WebViewController()
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..setNavigationDelegate(
+        NavigationDelegate(
+          onProgress: (int progress) {
+            // Update loading bar
+          },
+          onPageStarted: (String url) {
+            // Show loading indicator
+          },
+          onPageFinished: (String url) {
+            // Hide loading indicator
+          },
+          onWebResourceError: (WebResourceError error) {
+            // Handle error
+          },
+        ),
+      )
+      ..loadRequest(Uri.parse('https://library.msu.ac.zw'));
   }
 
   Future<void> _loadBooks() async {
@@ -87,6 +113,12 @@ class _LibraryPageState extends State<LibraryPage> {
     });
   }
 
+  void _toggleWebView() {
+    setState(() {
+      _showWebView = !_showWebView;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -94,133 +126,144 @@ class _LibraryPageState extends State<LibraryPage> {
         title: const Text('Library'),
         backgroundColor: AppTheme.msuMaroon,
         foregroundColor: Colors.white,
-      ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                hintText: 'Search books...',
-                prefixIcon: const Icon(Icons.search),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                filled: true,
-                fillColor: Colors.grey[100],
-              ),
-              onChanged: _filterBooks,
-            ),
-          ),
-          Expanded(
-            child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : _filteredBooks.isEmpty
-                    ? const Center(child: Text('No books found'))
-                    : ListView.builder(
-                        itemCount: _filteredBooks.length,
-                        itemBuilder: (context, index) {
-                          final book = _filteredBooks[index];
-                          return Card(
-                            margin: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 8),
-                            child: ListTile(
-                              leading: Image.network(
-                                book['coverUrl'],
-                                width: 50,
-                                errorBuilder: (context, error, stackTrace) =>
-                                    Container(
-                                  width: 50,
-                                  height: 70,
-                                  color: Colors.grey[300],
-                                  child: const Icon(Icons.book),
-                                ),
-                              ),
-                              title: Text(book['title']),
-                              subtitle: Text('${book['author']} • ${book['category']}'),
-                              trailing: Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 8, vertical: 4),
-                                decoration: BoxDecoration(
-                                  color: book['available']
-                                      ? Colors.green[100]
-                                      : Colors.red[100],
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: Text(
-                                  book['available'] ? 'Available' : 'Borrowed',
-                                  style: TextStyle(
-                                    color: book['available']
-                                        ? Colors.green[800]
-                                        : Colors.red[800],
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                              onTap: () {
-                                // Show book details
-                                showModalBottomSheet(
-                                  context: context,
-                                  builder: (context) => _buildBookDetails(book),
-                                );
-                              },
-                            ),
-                          );
-                        },
-                      ),
+        actions: [
+          IconButton(
+            icon: Icon(_showWebView ? Icons.book : Icons.language),
+            tooltip: _showWebView ? 'Show Books' : 'MSU Library Website',
+            onPressed: _toggleWebView,
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: AppTheme.msuMaroon,
-        foregroundColor: Colors.white,
-        onPressed: () {
-          // Show categories
-          showDialog(
-            context: context,
-            builder: (context) => AlertDialog(
-              title: const Text('Browse by Category'),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  ListTile(
-                    leading: const Icon(Icons.category),
-                    title: const Text('Computer Science'),
-                    onTap: () {
-                      Navigator.pop(context);
-                      _filterBooks('Computer Science');
-                    },
+      body: _showWebView 
+          ? WebViewWidget(controller: _webViewController)
+          : Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: TextField(
+                    controller: _searchController,
+                    decoration: InputDecoration(
+                      hintText: 'Search books...',
+                      prefixIcon: const Icon(Icons.search),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      filled: true,
+                      fillColor: Colors.grey[100],
+                    ),
+                    onChanged: _filterBooks,
                   ),
-                  ListTile(
-                    leading: const Icon(Icons.category),
-                    title: const Text('Software Engineering'),
-                    onTap: () {
-                      Navigator.pop(context);
-                      _filterBooks('Software Engineering');
-                    },
-                  ),
-                  ListTile(
-                    leading: const Icon(Icons.category),
-                    title: const Text('Artificial Intelligence'),
-                    onTap: () {
-                      Navigator.pop(context);
-                      _filterBooks('Artificial Intelligence');
-                    },
-                  ),
-                ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('Close'),
+                ),
+                Expanded(
+                  child: _isLoading
+                      ? const Center(child: CircularProgressIndicator())
+                      : _filteredBooks.isEmpty
+                          ? const Center(child: Text('No books found'))
+                          : ListView.builder(
+                              itemCount: _filteredBooks.length,
+                              itemBuilder: (context, index) {
+                                final book = _filteredBooks[index];
+                                return Card(
+                                  margin: const EdgeInsets.symmetric(
+                                      horizontal: 16, vertical: 8),
+                                  child: ListTile(
+                                    leading: Image.network(
+                                      book['coverUrl'],
+                                      width: 50,
+                                      errorBuilder: (context, error, stackTrace) =>
+                                          Container(
+                                        width: 50,
+                                        height: 70,
+                                        color: Colors.grey[300],
+                                        child: const Icon(Icons.book),
+                                      ),
+                                    ),
+                                    title: Text(book['title']),
+                                    subtitle: Text('${book['author']} • ${book['category']}'),
+                                    trailing: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 8, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: book['available']
+                                            ? Colors.green[100]
+                                            : Colors.red[100],
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child: Text(
+                                        book['available'] ? 'Available' : 'Borrowed',
+                                        style: TextStyle(
+                                          color: book['available']
+                                              ? Colors.green[800]
+                                              : Colors.red[800],
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                    onTap: () {
+                                      // Show book details
+                                      showModalBottomSheet(
+                                        context: context,
+                                        builder: (context) => _buildBookDetails(book),
+                                      );
+                                    },
+                                  ),
+                                );
+                              },
+                            ),
                 ),
               ],
             ),
-          );
-        },
-        child: const Icon(Icons.category),
-      ),
+      floatingActionButton: _showWebView 
+          ? null 
+          : FloatingActionButton(
+              backgroundColor: AppTheme.msuMaroon,
+              foregroundColor: Colors.white,
+              onPressed: () {
+                // Show categories
+                showDialog(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text('Browse by Category'),
+                    content: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        ListTile(
+                          leading: const Icon(Icons.category),
+                          title: const Text('Computer Science'),
+                          onTap: () {
+                            Navigator.pop(context);
+                            _filterBooks('Computer Science');
+                          },
+                        ),
+                        ListTile(
+                          leading: const Icon(Icons.category),
+                          title: const Text('Software Engineering'),
+                          onTap: () {
+                            Navigator.pop(context);
+                            _filterBooks('Software Engineering');
+                          },
+                        ),
+                        ListTile(
+                          leading: const Icon(Icons.category),
+                          title: const Text('Artificial Intelligence'),
+                          onTap: () {
+                            Navigator.pop(context);
+                            _filterBooks('Artificial Intelligence');
+                          },
+                        ),
+                      ],
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text('Close'),
+                      ),
+                    ],
+                  ),
+                );
+              },
+              child: const Icon(Icons.category),
+            ),
     );
   }
 

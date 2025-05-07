@@ -53,7 +53,7 @@ class _DocumentListScreenState extends State<DocumentListScreen> with SingleTick
 
   Future<void> _deleteDocument(String category, String fileName) async {
     try {
-      await _documentService.deleteDocument('$category/$fileName');
+      await _documentService.deleteDocument(category, fileName);
       
       // Refresh the document list
       await _loadDocuments();
@@ -67,7 +67,6 @@ class _DocumentListScreenState extends State<DocumentListScreen> with SingleTick
       );
     }
   }
-
   Future<void> _openDocument(String category, String fileName) async {
     try {
       final directory = await _documentService.getLocalPath;
@@ -195,7 +194,7 @@ class _DocumentListScreenState extends State<DocumentListScreen> with SingleTick
           ],
         ),
       ),
-      drawer: AppSidebar(),
+      drawer: AppSidebar(userData: {},),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : TabBarView(

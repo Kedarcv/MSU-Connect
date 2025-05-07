@@ -1,9 +1,9 @@
+# Keep Firebase classes
+-keep class com.google.firebase.** { *; }
+-keep class com.google.android.gms.** { *; }
+
 # Keep ML Kit classes
 -keep class com.google.mlkit.** { *; }
--keep class com.google.android.gms.vision.** { *; }
 
-# Keep the classes referenced in the error message
--keep class com.google.mlkit.vision.text.chinese.** { *; }
--keep class com.google.mlkit.vision.text.devanagari.** { *; }
--keep class com.google.mlkit.vision.text.japanese.** { *; }
--keep class com.google.mlkit.vision.text.korean.** { *; }
+# Specifically keep the missing class
+-keep class com.google.firebase.iid.FirebaseInstanceId { *; }

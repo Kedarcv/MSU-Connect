@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:msu_connect/features/services/auth_service.dart';
 import 'package:msu_connect/screens/auth/login_screen.dart';
 import 'package:msu_connect/screens/home_screen.dart';
-import 'package:msu_connect/services/auth_service.dart';
 
 class AuthWrapper extends StatefulWidget {
   const AuthWrapper({super.key});

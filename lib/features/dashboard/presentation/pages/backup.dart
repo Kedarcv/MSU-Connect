@@ -14,7 +14,6 @@ import 'package:msu_connect/features/widgets/dashboard_timetable_widget.dart';
 import 'package:msu_connect/features/services/document_service.dart';
 import 'package:msu_connect/screens/study_assistant_screen.dart';
 import 'package:webview_flutter/webview_flutter.dart';
-import 'dart:math' as math;
 
 class DashboardPage extends StatefulWidget {
   final Map<String, dynamic> userData;
@@ -32,8 +31,6 @@ class _DashboardPageState extends State<DashboardPage> {
   String _userName = '';
   String _userProgram = '';
   String _userRegNumber = '';
-  String _cardNumber = ''; // Default card number
-  bool _isFlipped = false;
   
   // Document service integration
   final DocumentService _documentService = DocumentService();
@@ -72,7 +69,6 @@ class _DashboardPageState extends State<DashboardPage> {
         _userName = widget.userData['displayName'] ?? '';
         _userProgram = widget.userData['program'] ?? '';
         _userRegNumber = widget.userData['regNumber'] ?? '';
-        _cardNumber = widget.userData['cardNumber'] ?? '**** **** **** ****';
       });
     }
     
@@ -86,7 +82,6 @@ class _DashboardPageState extends State<DashboardPage> {
             _userName = data['displayName'] ?? '';
             _userProgram = data['program'] ?? '';
             _userRegNumber = data['regNumber'] ?? '';
-            _cardNumber = data['cardNumber'] ?? '**** **** **** ****';
           });
         }
       }).catchError((error) {
@@ -309,513 +304,6 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  Widget _buildFrontCard() {
-    final user = FirebaseAuth.instance.currentUser;
-    final universityName = "Midlands State University";
-    final expirationDate = "Exp: 12/25";
-    
-    return Container(
-      key: const ValueKey<bool>(false),
-      width: double.infinity,
-      height: 220,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        gradient: LinearGradient(
-          colors: [Colors.blue.shade900, Colors.blue.shade700],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black26,
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Stack(
-        children: [
-          // Background pattern
-          Positioned.fill(
-            child: Opacity(
-              opacity: 0.1,
-              child: CustomPaint(
-                painter: CardPatternPainter(),
-              ),
-            ),
-          ),
-          
-          // Card chip
-          Positioned(
-            top: 20,
-            left: 20,
-            child: Container(
-              width: 48,
-              height: 36,
-              decoration: BoxDecoration(
-                color: Colors.amber.shade300,
-                borderRadius: BorderRadius.circular(6),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.2),
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: List.generate(
-                  3,
-                  (index) => Container(
-                    height: 6,
-                    margin: const EdgeInsets.symmetric(horizontal: 6),
-                    decoration: BoxDecoration(
-                      color: Colors.amber.shade600,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-          
-          // University logo
-          Positioned(
-            top: 20,
-            left: 80,
-            child: Container(
-              width: 60,
-              height: 60,
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white,
-              ),
-              child: ClipOval(
-                child: Image.asset(
-                  "assets/msu.png",
-                  fit: BoxFit.cover,
-                ),
-              ),
-            ),
-          ),
-          
-          // Profile Image
-          Positioned(
-            top: 20,
-            right: 20,
-            child: Container(
-              width: 70,
-              height: 70,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white,
-                border: Border.all(color: Colors.white, width: 2),
-              ),
-              child: ClipOval(
-                child: user?.photoURL != null && user!.photoURL!.isNotEmpty
-                  ? Image.network(
-                      user.photoURL!,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => Icon(
-                        Icons.person,
-                        size: 50,
-                        color: Colors.blue.shade900,
-                      ),
-                    )
-                  : Icon(
-                      Icons.person,
-                      size: 50,
-                      color: Colors.blue.shade900,
-                    ),
-              ),
-            ),
-          ),
-          
-          // University name
-          Positioned(
-            top: 100,
-            left: 20,
-            child: Text(
-              universityName,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-          
-          // Student name
-          Positioned(
-            top: 125,
-            left: 20,
-            child: Text(
-              _userName.isEmpty ? (user?.displayName ?? 'Student Name') : _userName,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-          
-          // Program - evenly spaced
-          Positioned(
-            top: 150,
-            left: 20,
-            child: Text(
-              _userProgram.isEmpty ? 'Degree Program' : _userProgram,
-              style: TextStyle(
-                color: Colors.white.withOpacity(0.9),
-                fontSize: 14,
-              ),
-            ),
-          ),
-          
-          // Reg Number - evenly spaced
-          Positioned(
-            top: 170,
-            left: 20,
-            child: Row(
-              children: [
-                const Text(
-                  "Reg: ",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                Text(
-                  _userRegNumber.isEmpty ? 'R0000000' : _userRegNumber,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          
-          // Expiration date
-          Positioned(
-            bottom: 10,
-            left: 20,
-            child: Text(
-              expirationDate,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-          
-          // CBZ Logo
-          Positioned(
-            bottom: 15,
-            right: 20,
-            child: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.red,
-                border: Border.all(color: Colors.white, width: 2),
-              ),
-              child: Center(
-                child: Text(
-                  "CBZ",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    shadows: [
-                      Shadow(
-                        offset: Offset(1, 1),
-                        blurRadius: 2,
-                        color: Colors.black.withOpacity(0.5),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-          
-          // Tap to flip hint
-          Positioned(
-            bottom: 5,
-            right: 5,
-            child: Icon(
-              Icons.flip,
-              color: Colors.white.withOpacity(0.5),
-              size: 16,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBackCard() {
-    final cvv = "123";
-    final barcode = _userRegNumber.isEmpty ? "R0000000" : _userRegNumber;
-    
-    return Container(
-      key: const ValueKey<bool>(true),
-      width: double.infinity,
-      height: 220,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        color: Colors.blue.shade800,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black26,
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Stack(
-        children: [
-          // Background pattern
-          Positioned.fill(
-            child: Opacity(
-              opacity: 0.1,
-              child: CustomPaint(
-                painter: CardPatternPainter(),
-              ),
-            ),
-          ),
-          
-          // Magnetic strip
-          Positioned(
-            top: 30,
-            left: 0,
-            right: 0,
-            child: Container(
-              height: 40,
-              color: Colors.black45,
-            ),
-          ),
-          
-          // Card number - Added to back of card
-          Positioned(
-            top: 80,
-            left: 20,
-            child: Text(
-              "Card Number:",
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-          
-          Positioned(
-            top: 100,
-            left: 20,
-            child: Text(
-              _cardNumber,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-                fontFamily: 'monospace',
-                fontWeight: FontWeight.bold,
-                letterSpacing: 2,
-              ),
-            ),
-          ),
-          
-          // CVV
-          Positioned(
-            top: 130,
-            right: 30,
-            child: Container(
-              width: 60,
-              height: 30,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Center(
-                child: Text(
-                  cvv,
-                  style: TextStyle(
-                    color: Colors.blue.shade900,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
-          ),
-          
-          // CVV Label
-          Positioned(
-            top: 130,
-            right: 100,
-            child: const Text(
-              "CVV:",
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-          
-          // Barcode
-          Positioned(
-            bottom: 40,
-            left: 20,
-            right: 20,
-            child: Container(
-              height: 60,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    // Simulated barcode
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: List.generate(
-                        30,
-                        (index) => Container(
-                          width: 2,
-                          height: 30,
-                          margin: const EdgeInsets.symmetric(horizontal: 1),
-                          color: index % 3 == 0 ? Colors.black : Colors.black54,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 5),
-                    Text(
-                      barcode,
-                      style: const TextStyle(
-                        color: Colors.black,
-                        fontSize: 14,
-                        fontFamily: 'monospace',
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          
-          // MSU logo watermark
-          Positioned(
-            top: 140,
-            left: 20,
-            child: Opacity(
-              opacity: 0.2,
-              child: Image.asset(
-                "assets/msu.png",
-                width: 60,
-                height: 60,
-                color: Colors.white,
-                colorBlendMode: BlendMode.srcIn,
-              ),
-            ),
-          ),
-          
-          // CBZ Logo
-          Positioned(
-            bottom: 15,
-            right: 20,
-            child: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.red,
-                border: Border.all(color: Colors.white, width: 2),
-              ),
-              child: Center(
-                child: Text(
-                  "CBZ",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    shadows: [
-                      Shadow(
-                        offset: Offset(1, 1),
-                        blurRadius: 2,
-                        color: Colors.black.withOpacity(0.5),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-          
-          // Tap to flip hint
-          Positioned(
-            bottom: 5,
-            right: 5,
-            child: Icon(
-              Icons.flip,
-              color: Colors.white.withOpacity(0.5),
-              size: 16,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStudentIdCard() {
-    return SizedBox(
-      width: double.infinity,
-      height: 220,
-      child: GestureDetector(
-        onTap: () {
-          setState(() {
-            _isFlipped = !_isFlipped;
-          });
-        },
-        child: TweenAnimationBuilder(
-          tween: Tween<double>(
-            begin: 0,
-            end: _isFlipped ? 180.0 : 0.0,
-          ),
-          duration: const Duration(milliseconds: 500),
-          curve: Curves.easeOutBack,
-          builder: (context, double value, child) {
-            // Determine which side to show based on the rotation angle
-            bool showFront = value < 90;
-            
-            return Transform(
-              alignment: Alignment.center,
-              transform: Matrix4.identity()
-                ..setEntry(3, 2, 0.001) // Perspective
-                ..rotateY((value * math.pi) / 180),
-              child: showFront 
-                  ? _buildFrontCard()
-                  : Transform(
-                      alignment: Alignment.center,
-                      transform: Matrix4.identity()..rotateY(math.pi),
-                      child: _buildBackCard(),
-                    ),
-            );
-          },
-        ),
-      ),
-    ).animate()
-      .fadeIn(duration: AppAnimations.defaultDuration)
-      .slideY(duration: AppAnimations.defaultDuration, begin: -0.2);
-  }
-
   @override
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
@@ -833,26 +321,6 @@ class _DashboardPageState extends State<DashboardPage> {
                 context,
                 MaterialPageRoute(builder: (context) => const NotificationsPage()),
               );
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.account_circle),
-            onPressed: () async {
-              final updatedData = await Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => ProfilePage(userData: widget.userData)),
-              );
-              
-              // If we got updated data back, refresh the UI
-              if (updatedData != null) {
-                setState(() {
-                  _userName = updatedData['displayName'] ?? '';
-                  _userProgram = updatedData['program'] ?? '';
-                  _userRegNumber = updatedData['regNumber'] ?? '';
-                  _cardNumber = updatedData['cardNumber'] ?? '**** **** **** ****';
-                  // Update any other fields that might have changed
-                });
-              }
             },
           ),
         ],
@@ -873,9 +341,85 @@ class _DashboardPageState extends State<DashboardPage> {
                     children: [
                       _buildSectionHeader(context, 'Dashboard Overview'),
                       
-                      // Student ID Card Section
-                      _buildStudentIdCard(),
-                      
+                      // Profile Section
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => ProfilePage(userData: widget.userData)),
+                          );
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [AppTheme.msuMaroon, AppTheme.msuTeal],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: BorderRadius.circular(20),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 10,
+                                spreadRadius: 2,
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            children: [
+                              CircleAvatar(
+                                radius: 30,
+                                backgroundColor: AppTheme.msuGold,
+                                child: const Icon(Icons.person, size: 40, color: Colors.white),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      _userName.isEmpty ? (user?.displayName ?? 'Welcome, Student') : _userName,
+                                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                    ),
+                                    Text(
+                                      _userProgram.isEmpty ? 'Complete your profile' : _userProgram,
+                                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                            color: Colors.white70,
+                                          ),
+                                    ),
+                                    if (_userRegNumber.isNotEmpty)
+                                      Text(
+                                        'Reg: $_userRegNumber',
+                                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                              color: Colors.white70,
+                                            ),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                              if (_userName.isEmpty || _userProgram.isEmpty || _userRegNumber.isEmpty)
+                                Container(
+                                  padding: const EdgeInsets.all(8),
+                                  decoration: BoxDecoration(
+                                    color: Colors.amber,
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: const Icon(
+                                    Icons.edit,
+                                    color: Colors.white,
+                                    size: 20,
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                      ).animate()
+                        .fadeIn(duration: AppAnimations.defaultDuration)
+                        .slideX(duration: AppAnimations.defaultDuration, begin: -0.2),
                       const SizedBox(height: 24),
                       
                       // Recent Documents Section
@@ -898,7 +442,7 @@ class _DashboardPageState extends State<DashboardPage> {
                             padding: EdgeInsets.all(16.0),
                             child: Center(
                               child: Text(
-                                'Upload some documents to get started with our BroCode-AI.',
+                                'No documents available. Upload some documents to get started.',
                                 textAlign: TextAlign.center,
                               ),
                             ),
@@ -999,7 +543,7 @@ class _DashboardPageState extends State<DashboardPage> {
                         children: [
                           _buildQuickLinkCard(
                             context,
-                            'Map',
+                            'Campus Map',
                             Icons.map,
                             () {
                               Navigator.push(
@@ -1010,7 +554,7 @@ class _DashboardPageState extends State<DashboardPage> {
                           ),
                           _buildQuickLinkCard(
                             context,
-                            'E-Library',
+                            'Library',
                             Icons.library_books,
                             () {
                               Navigator.push(
@@ -1032,7 +576,7 @@ class _DashboardPageState extends State<DashboardPage> {
                           ),
                           _buildQuickLinkCard(
                             context,
-                            'BroCode AI',
+                            'AI Study Tool',
                             Icons.psychology,
                             () {
                               Navigator.push(
@@ -1075,9 +619,8 @@ class _DashboardPageState extends State<DashboardPage> {
                                 ),
                               ),
                             ),
-                          ).animate()
-                            .fadeIn(duration: AppAnimations.defaultDuration)
-                            .scale(duration: AppAnimations.defaultDuration),
+
+                          ),
                           _buildQuickLinkCard(
                             context,
                             'Upload Document',
@@ -1106,55 +649,5 @@ class _DashboardPageState extends State<DashboardPage> {
               ),
             ),
     );
-  }
-}
-
-// Custom painter for card background pattern
-class CardPatternPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = Colors.white.withOpacity(0.1)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.0;
-
-    // Draw a grid pattern
-    for (double i = 0; i < size.width; i += 20) {
-      canvas.drawLine(
-        Offset(i, 0),
-        Offset(i, size.height),
-        paint,
-      );
-    }
-
-    for (double i = 0; i < size.height; i += 20) {
-      canvas.drawLine(
-        Offset(0, i),
-        Offset(size.width, i),
-        paint,
-      );
-    }
-
-    // Draw some circles for decoration
-    final circlePaint = Paint()
-      ..color = Colors.white.withOpacity(0.1)
-      ..style = PaintingStyle.fill;
-
-    canvas.drawCircle(
-      Offset(size.width * 0.8, size.height * 0.2),
-      40,
-      circlePaint,
-    );
-
-    canvas.drawCircle(
-      Offset(size.width * 0.2, size.height * 0.8),
-      30,
-      circlePaint,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) {
-    return false;
   }
 }

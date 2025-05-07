@@ -10,7 +10,7 @@ class TimetableService {
   Stream<Map<String, List<ClassInfo>>> get timetableStream => _timetableStreamController.stream;
   Map<String, List<ClassInfo>> get timetableData => _timetableData;
 
-  Future<void> initialize() async {
+  Future<void> initialize({required String userId}) async {
     final rawData = await loadTimetable();
     _timetableData = _convertToClassInfoMap(rawData);
     _timetableStreamController.add(_timetableData);

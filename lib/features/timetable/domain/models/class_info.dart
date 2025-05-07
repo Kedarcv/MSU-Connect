@@ -34,4 +34,7 @@ class ClassInfo {
       'color_value': colorValue,
     };
   }
-}
+
+  static Map<String, List<ClassInfo>> fromMap(classData) {
+    return {};
+  }}

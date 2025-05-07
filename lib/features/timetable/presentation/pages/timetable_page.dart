@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:msu_connect/core/theme/app_theme.dart';
 import 'package:msu_connect/features/services/timetable_service.dart';
 import 'package:msu_connect/features/timetable/domain/models/class_info.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class TimetablePage extends StatefulWidget {
   const TimetablePage({super.key});
@@ -14,6 +15,7 @@ class _TimetablePageState extends State<TimetablePage> with SingleTickerProvider
   late TabController _tabController;
   final List<String> _weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
   final TimetableService _timetableService = TimetableService();
+  final FirebaseAuth _auth = FirebaseAuth.instance;
   bool _isLoading = true;
   Map<String, List<ClassInfo>> _timetableData = {};
   
@@ -39,6 +41,14 @@ class _TimetablePageState extends State<TimetablePage> with SingleTickerProvider
         });
       }
     });
+    
+    // Listen for auth state changes
+    _auth.authStateChanges().listen((User? user) {
+      if (user != null && mounted) {
+        // User logged in, load their timetable
+        _loadTimetableData();
+      }
+    });
   }
   
   @override
@@ -48,17 +58,40 @@ class _TimetablePageState extends State<TimetablePage> with SingleTickerProvider
   }
   
   Future<void> _loadTimetableData() async {
+    if (_auth.currentUser == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please log in to view your timetable')),
+      );
+      setState(() {
+        _isLoading = false;
+        _timetableData = {};
+      });
+      return;
+    }
+    
     setState(() {
       _isLoading = true;
     });
     
-    await _timetableService.initialize();
-    
-    if (mounted) {
-      setState(() {
-        _timetableData = _timetableService.timetableData;
-        _isLoading = false;
-      });
+    try {
+      // Initialize with the current user's ID to load their specific timetable
+      await _timetableService.initialize(userId: _auth.currentUser!.uid);
+      
+      if (mounted) {
+        setState(() {
+          _timetableData = _timetableService.timetableData;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error loading timetable: ${e.toString()}')),
+        );
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -85,17 +118,39 @@ class _TimetablePageState extends State<TimetablePage> with SingleTickerProvider
           ),
         ],
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : TabBarView(
-              controller: _tabController,
-              children: _weekdays.map((day) => _buildDaySchedule(day)).toList(),
+      body: _auth.currentUser == null
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text('Please log in to view your timetable'),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () {
+                      // Navigate to login page or show login dialog
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.msuMaroon,
+                      foregroundColor: Colors.white,
+                    ),
+                    child: const Text('Log In'),
+                  ),
+                ],
+              ),
+            )
+          : _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : TabBarView(
+                  controller: _tabController,
+                  children: _weekdays.map((day) => _buildDaySchedule(day)).toList(),
+                ),
+      floatingActionButton: _auth.currentUser == null
+          ? null
+          : FloatingActionButton(
+              onPressed: () => _showAddClassDialog(context),
+              backgroundColor: AppTheme.msuMaroon,
+              child: const Icon(Icons.add, color: Colors.white),
             ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showAddClassDialog(context),
-        backgroundColor: AppTheme.msuMaroon,
-        child: const Icon(Icons.add, color: Colors.white),
-      ),
     );
   }
 

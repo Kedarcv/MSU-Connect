@@ -47,12 +47,12 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
       appBar: AppBar(
         title: Text(_getTitle()),
       ),
-      drawer: AppSidebar(),
+      drawer: AppSidebar(userData: {},),
       body: _pages[_currentIndex],
       bottomNavigationBar: NavigationBar(
         destinations: const [
           NavigationDestination(icon: Icon(Icons.dashboard), label: 'Dashboard'),
-          NavigationDestination(icon: Icon(Icons.map), label: 'Campus Map'),
+          NavigationDestination(icon: Icon(Icons.map), label: 'Map'),
           NavigationDestination(icon: Icon(Icons.school), label: 'Classroom'),
           NavigationDestination(icon: Icon(Icons.person), label: 'Profile'),
           NavigationDestination(icon: Icon(Icons.settings), label: 'Settings'),
@@ -66,7 +66,7 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
   String _getTitle() {
     switch (_currentIndex) {
       case 0: return 'Dashboard';
-      case 1: return 'Campus Map';
+      case 1: return 'Map';
       case 2: return 'Classroom';
       case 3: return 'AI Assistant';
       case 4: return 'Profile';

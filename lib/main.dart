@@ -4,11 +4,12 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:msu_connect/features/dashboard/presentation/pages/dashboard_page.dart';
 import 'package:msu_connect/features/profile/presentation/pages/profile_page.dart';
+import 'package:msu_connect/features/services/auth_service.dart';
+import 'package:msu_connect/features/timetable/presentation/pages/timetable_page.dart';
 import 'package:msu_connect/screens/auth/login_screen.dart';
 import 'package:msu_connect/screens/study_assistant_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:msu_connect/core/models/firebase_options.dart';
-import 'package:msu_connect/features/screens/timetable_screen.dart';
 import 'package:msu_connect/features/screens/document_list_screen.dart';
 import 'package:msu_connect/features/screens/document_upload_screen.dart';
 import 'package:msu_connect/features/screens/ai_assistant_screen.dart';
@@ -44,7 +45,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider<AuthService>(
+        ChangeNotifierProvider(
           create: (_) => AuthService(),
         ),
       ],
@@ -69,9 +70,9 @@ class MyApp extends StatelessWidget {
             };
             return DashboardPage(userData: userData);
           },
-          '/timetable': (context) => const TimetableScreen(),
+          '/timetable': (context) => const TimetablePage(),
           '/documents': (context) => const DocumentListScreen(),
-          '/documents/upload': (context) => const DocumentUploadScreen(),
+          '/documents/upload': (context) => const DocumentUploadPage(),
           '/profile': (context) {
             final authService = Provider.of<AuthService>(context, listen: false);
             final user = authService.currentUser;
@@ -125,38 +126,5 @@ class AuthenticationWrapper extends StatelessWidget {
         return const LoginScreen();
       },
     );
-  }
-}
-
-// auth_service.dart
-class AuthService with ChangeNotifier {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  
-  User? get currentUser => _auth.currentUser;
-  Stream<User?> get authStateChanges => _auth.authStateChanges();
-
-  Future<UserCredential?> signIn(String email, String password) async {
-    try {
-      final credential = await _auth.signInWithEmailAndPassword(
-        email: email, 
-        password: password
-      );
-      print('Sign in successful for ${credential.user?.email}');
-      notifyListeners();
-      return credential;
-    } catch (e) {
-      print('Sign in error: $e');
-      return null;
-    }
-  }
-
-  Future<void> signOut() async {
-    try {
-      await _auth.signOut();
-      print('User signed out');
-      notifyListeners();
-    } catch (e) {
-      print('Sign out error: $e');
-    }
   }
 }

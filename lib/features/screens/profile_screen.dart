@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:msu_connect/features/auth/data/services/auth_service.dart';
+import 'package:msu_connect/features/services/auth_service.dart';
 import 'package:msu_connect/features/widgets/app_sidebar.dart';
 import 'package:msu_connect/features/services/ai_service.dart';
 import 'package:provider/provider.dart';
@@ -48,7 +48,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       appBar: AppBar(
         title: const Text('Profile'),
       ),
-      drawer: AppSidebar(),
+      drawer: AppSidebar(userData: {},),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(

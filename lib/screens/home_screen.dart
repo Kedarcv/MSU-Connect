@@ -1,6 +1,7 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:msu_connect/features/services/auth_service.dart';
 import 'package:msu_connect/screens/study_assistant_screen.dart';
-import 'package:msu_connect/services/auth_service.dart';
 import 'package:msu_connect/screens/auth/login_screen.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -16,7 +17,7 @@ class HomeScreen extends StatelessWidget {
             icon: const Icon(Icons.logout),
             onPressed: () async {
               final authService = AuthService();
-              await authService.signOut();
+              await FirebaseAuth.instance.signOut();
               Navigator.of(context).pushReplacement(
                 MaterialPageRoute(builder: (context) => const LoginScreen()),
               );

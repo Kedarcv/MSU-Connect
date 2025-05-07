@@ -7,12 +7,14 @@ class DefaultFirebaseOptions {
     final appId = dotenv.env['APP_ID'] ?? '';
     final messagingSenderId = dotenv.env['MESSAGING_SENDER_ID'] ?? '';
     final projectId = dotenv.env['PROJECT_ID'] ?? '';
+    final storageBucket = dotenv.env['STORAGE_BUCKET'] ?? '';
 
     return FirebaseOptions(
       apiKey: apiKey,
       appId: appId,
       messagingSenderId: messagingSenderId,
       projectId: projectId,
+      storageBucket: storageBucket,
     );
   }
 }

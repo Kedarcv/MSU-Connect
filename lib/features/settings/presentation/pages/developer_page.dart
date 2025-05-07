@@ -118,6 +118,12 @@ class DeveloperPage extends StatelessWidget {
                 'Expert advice on software architecture, development, and implementation.',
                 Icons.business,
               ),
+              _buildServiceCard(
+                context,
+                'Lead Developer',
+                'Michael Mlungisi Nkomo.',
+                Icons.business,
+              ),
               const SizedBox(height: 32),
               const Text(
                 'Contact Us',
@@ -145,13 +151,13 @@ class DeveloperPage extends StatelessWidget {
               _buildContactButton(
                 context,
                 'Phone',
-                '+263 77 123 4567',
+                '+263 71 934 0335',
                 Icons.phone,
-                () => _launchUrl('tel:+263771234567'),
+                () => _launchUrl('tel:+263719340335'),
               ),
               const SizedBox(height: 32),
               const Text(
-                '© 2023 Brocode Zimbabwe. All rights reserved.',
+                '© 2025 Brocode Zimbabwe. All rights reserved.',
                 style: TextStyle(
                   fontSize: 14,
                   color: Colors.grey,
